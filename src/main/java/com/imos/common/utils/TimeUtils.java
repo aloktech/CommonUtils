@@ -7,7 +7,6 @@ package com.imos.common.utils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import javax.inject.Inject;
 
 /**
  *
@@ -20,10 +19,6 @@ public class TimeUtils {
     public static final String UNDER_SCORE = "_";
     public static final String SLASH = "/";
     public static final String COLON = ":";
-
-    @Inject
-    public TimeUtils() {
-    }
 
     public String getTimeWithDate() {
 

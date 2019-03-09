@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  *
  * @author Alok Ranjan
  */
+@Deprecated
 public class ProcessExecutor {
-    
+
     @Getter
     private final List<String> command;
     private Process process;
@@ -78,15 +78,4 @@ public class ProcessExecutor {
         }
         return flags;
     }
-
-    @Setter @Getter
-    public static class Flags {
-
-        private boolean readInput;
-        private String inputMsg = "";
-        private boolean readError;
-        private String errMsg = "";
-    }
-
 }
-
