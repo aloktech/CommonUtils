@@ -3,17 +3,13 @@ import com.imos.common.utils.Scheduler;
 import com.imos.common.utils.SchedulerTask;
 import com.imos.common.utils.TimeUtils;
 import java.util.Timer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 /**
  *
  * @author Pintu
  */
+@Deprecated
 public class SchedulerTest {
 
     @Test

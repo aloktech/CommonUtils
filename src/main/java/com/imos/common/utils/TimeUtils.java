@@ -126,7 +126,6 @@ public class TimeUtils {
         if (!scheduler.getHour().equals("0")) {
             time += interval * 60 * 60 * Long.parseLong(scheduler.getHour());
         }
-        System.out.println(time);
         return time;
     }
 }
