@@ -52,7 +52,15 @@ public class CommandUtils {
         return executeBatchCommand(dir, batchFile, 0);
     }
 
-    public List<String> executeCommand(String dir, long waitingTime, List<String> cmds) {
+    public List<String> executeCommand(List<String> cmds) {
+        return executeCommand(new File(".").getAbsolutePath(), cmds);
+    }
+
+    public List<String> executeCommand(String dir, List<String> cmds) {
+        return executeCommand(dir, cmds, 0);
+    }
+
+    public List<String> executeCommand(String dir, List<String> cmds, long waitingTime) {
         List<String> lines = Collections.EMPTY_LIST;
         List<String> pcmds = new ArrayList<>();
         pcmds.add("cmd.exe");
@@ -86,20 +94,12 @@ public class CommandUtils {
             if (exitValue == 0) {
                 LOG.info("Success");
             } else {
-                LOG.error("ERROR {}", exitValue);
+                LOG.error("Failure {}", exitValue);
             }
         } catch (IOException | InterruptedException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
         return lines;
-    }
-
-    public List<String> executeCommand(List<String> cmds) {
-        return executeCommand(new File(".").getAbsolutePath(), cmds);
-    }
-
-    public List<String> executeCommand(String dir, List<String> cmds) {
-        return executeCommand(dir, 0, cmds);
     }
 
     private List<String> readInputStreamData(InputStream output) {

@@ -5,8 +5,8 @@
  */
 package com.imos.common.utils;
 
+import com.alibaba.fastjson.JSON;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -51,6 +51,12 @@ public class FileIOUtils {
     public static <T> List<String> transferObjectToStringStream(Collection<T> list) {
         return list.stream()
                 .map(o -> o.toString())
+                .collect(Collectors.toList());
+    }
+    
+    public static <T> List<String> transferObjectToJSONStringStream(Collection<T> list) {
+        return list.stream()
+                .map(o -> JSON.toJSONString(o))
                 .collect(Collectors.toList());
     }
 
