@@ -5,9 +5,12 @@
  */
 package com.imos.common.utils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import javax.inject.Inject;
 
 /**
  *
@@ -21,95 +24,51 @@ public class TimeUtils {
     public static final String SLASH = "/";
     public static final String COLON = ":";
 
-    @Inject
-    public TimeUtils() {
+    public String getTimeWithDate(String timeDateFormat) {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern(timeDateFormat));
     }
 
     public String getTimeWithDate() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss a dd-mm-yyyy"));
+    }
 
-        StringBuilder builder = new StringBuilder();
-        INSTANCE.setTimeInMillis(System.currentTimeMillis());
-        getCurrentTime(builder);
-        builder.append(COLON);
-        builder.append(INSTANCE.get(Calendar.DAY_OF_MONTH));
-        builder.append(SLASH);
-        builder.append(INSTANCE.get(Calendar.MONTH));
-        builder.append(SLASH);
-        builder.append(INSTANCE.get(Calendar.YEAR));
-
-        return builder.toString();
+    public String getCurrentDate(String dateFormat) {
+        return LocalDate.now().format(DateTimeFormatter.ofPattern(dateFormat));
     }
 
     public String getCurrentDate() {
-        StringBuilder builder = new StringBuilder();
-        INSTANCE.setTimeInMillis(System.currentTimeMillis());
-        getCurrentTime(builder);
-        builder.append(COLON);
-        builder.append(INSTANCE.get(Calendar.DAY_OF_MONTH));
-        builder.append(SLASH);
-        builder.append(INSTANCE.get(Calendar.MONTH));
-        builder.append(SLASH);
-        builder.append(INSTANCE.get(Calendar.YEAR));
+        return LocalDate.now().format(DateTimeFormatter.ofPattern("dd-mm-yyyy"));
+    }
 
-        return builder.toString();
+    public String getCurrentTime(String timeFormat) {
+        return LocalTime.now().format(DateTimeFormatter.ofPattern(timeFormat));
     }
 
     public String getCurrentTime() {
-        StringBuilder builder = new StringBuilder();
-        INSTANCE.setTimeInMillis(System.currentTimeMillis());
-        getCurrentTime(builder);
-
-        return builder.toString();
+        return LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss a"));
     }
 
+    public String getCurrentTimeWithDate(String timeDateFormat) {
+        return LocalTime.now().format(DateTimeFormatter.ofPattern(timeDateFormat));        
+    }
     public String getCurrentTimeWithDate() {
-        StringBuilder builder = new StringBuilder();
-        INSTANCE.setTimeInMillis(System.currentTimeMillis());
-        builder.append(INSTANCE.get(Calendar.DAY_OF_MONTH));
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.MONTH) + 1);
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.YEAR));
-        builder.append(UNDER_SCORE);
-        getCurrentTime(builder);
-
-        return builder.toString();
+        return LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss a dd-mm-yyyy"));
     }
 
-    public String getCurrentTimeWithPreviousDate() {
-        StringBuilder builder = new StringBuilder();
-        INSTANCE.setTimeInMillis(System.currentTimeMillis());
-        builder.append(INSTANCE.get(Calendar.DAY_OF_MONTH) - 1);
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.MONTH) + 1);
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.YEAR));
-        builder.append(UNDER_SCORE);
-        getCurrentTime(builder);
-
-        return builder.toString();
+    public String getCurrentTimeOnPreviousDate(String timeDateFormat) {
+        return LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern(timeDateFormat));
     }
 
-    public String getCurrentTimeWithAfterDate() {
-        StringBuilder builder = new StringBuilder();
-        INSTANCE.setTimeInMillis(System.currentTimeMillis());
-        builder.append(INSTANCE.get(Calendar.DAY_OF_MONTH) + 1);
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.MONTH) + 1);
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.YEAR));
-        builder.append(UNDER_SCORE);
-        getCurrentTime(builder);
-
-        return builder.toString();
+    public String getCurrentTimeOnPreviousDate() {
+        return LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("hh:mm:ss a dd-mm-yyyy"));
     }
 
-    private void getCurrentTime(StringBuilder builder) {
-        builder.append(INSTANCE.get(Calendar.HOUR_OF_DAY));
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.MINUTE));
-        builder.append(UNDER_SCORE);
-        builder.append(INSTANCE.get(Calendar.SECOND));
+    public String getCurrentTimeOnNextDate(String timeDateFormat) {
+        return LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern(timeDateFormat));
+    }
+
+    public String getCurrentTimeOnNextDate() {
+        return LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("hh:mm:ss a dd-mm-yyyy"));
     }
 
     public long getDelayed(Scheduler scheduler) {

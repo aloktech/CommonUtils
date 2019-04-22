@@ -5,8 +5,8 @@
  */
 package com.imos.common.utils;
 
+import com.alibaba.fastjson.JSON;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
@@ -49,19 +48,19 @@ public class FileIOUtils {
         }
     }
 
-    public static <T> List<String> transferObjectToStringStream(Collection<T> list, Function<T, String> mapToString) {
-        return list.stream()
-                .map(mapToString)
-                .collect(Collectors.toList());
-    }
-
     public static <T> List<String> transferObjectToStringStream(Collection<T> list) {
         return list.stream()
                 .map(o -> o.toString())
                 .collect(Collectors.toList());
     }
+    
+    public static <T> List<String> transferObjectToJSONStringStream(Collection<T> list) {
+        return list.stream()
+                .map(o -> JSON.toJSONString(o))
+                .collect(Collectors.toList());
+    }
 
-    public static void writeToJSONFileWithTimeIncreName(String fileName, Collection<String> lines) {
+    public static void writeToIncrementalJSONFile(String fileName, Collection<String> lines) {
         try {
             Files.write(Paths.get(createIncrementalFileName(fileName)),
                     lines.stream()
@@ -71,7 +70,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFileWithTimeIncreName(String fileName, String data) {
+    public static void writeToIncrementalFile(String fileName, String data) {
         try {
             Files.write(Paths.get(createIncrementalFileName(fileName)), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
@@ -79,7 +78,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeFileWithTimeIncreName(String fileName, Collection<String> lines) {
+    public static void writeToIncrementalFile(String fileName, Collection<String> lines) {
         try {
             Files.write(Paths.get(createIncrementalFileName(fileName)), lines, OPEN_OPTION);
         } catch (IOException ex) {
@@ -136,7 +135,7 @@ public class FileIOUtils {
     public static void writeToFileAtResources(String fileName, Collection<String> lines) {
         fileName = checkResourceFolder(fileName);
         try {
-            Files.write(Paths.get(fileName), lines, OPEN_OPTION);
+            Files.write(Paths.get(createFileName(fileName)), lines, OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
@@ -179,7 +178,8 @@ public class FileIOUtils {
         } else {
             try {
                 LOG.warn("{} does not exist", filePath);
-                lines = Files.readAllLines(Paths.get(FileReader.class.getClassLoader().getResource(filePath).toURI()));
+                LOG.info("{} file read from resourecs folder", filePath);
+                lines = Files.readAllLines(Paths.get(FileIOUtils.class.getClassLoader().getResource(filePath).toURI()));
             } catch (URISyntaxException | IOException ex) {
                 LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
                 lines = Collections.EMPTY_LIST;
@@ -218,12 +218,12 @@ public class FileIOUtils {
         return name + "_" + INCREMENTAL_DATE_FORMAT + "." + ext;
     }
 
-    private static String createIncrementalFileName(String fileName) {
-        return createFileName(fileName, true);
-    }
-
     private static String createFileName(String name, String ext) {
         return name + "." + ext;
+    }
+
+    private static String createIncrementalFileName(String fileName) {
+        return createFileName(fileName, true);
     }
 
     private static String createFileName(String fileName, boolean incremental) {

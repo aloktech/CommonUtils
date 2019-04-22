@@ -28,7 +28,7 @@ public class URLUtils {
 
     private static final Logger LOG = LogManager.getLogger(URLUtils.class);
 
-    public static void downloadFromUrl(String urlString, String destDir) {
+    public static void downloadFromURL(String urlString, String destDir) {
         File targetFile = new File(destDir);
         OutputStream outStream;
         try {
@@ -50,7 +50,7 @@ public class URLUtils {
         }
     }
 
-    public static List<String> readStringFromUrl(String urlString) {
+    public static List<String> readStringFromURL(String urlString) {
         List<String> lines = new ArrayList<>();
         try {
             URL url = new URL(urlString);
