@@ -36,12 +36,12 @@ public class FileIOUtils {
 
     private static final String INCREMENTAL_DATE_FORMAT = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd_MMM_YYYY_hh_mm_ss a"));
 
-    public static void parseForFoldersAndFiles(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition) {
+    public static void searchForFoldersAndFiles(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition) {
         if (file != null) {
             for (File subFile : file.listFiles()) {
                 String name = subFile.getName();
                 if (!subFile.isHidden() && subFile.isDirectory() && folderCondition.test(name)) {
-                    parseForFoldersAndFiles(subFile, fileList, folderCondition, fileCondition);
+                    searchForFoldersAndFiles(subFile, fileList, folderCondition, fileCondition);
                 } else if (!subFile.isHidden() && subFile.isFile() && fileCondition.test(name)) {
                     fileList.add(subFile.getAbsolutePath());
                 }
@@ -64,7 +64,8 @@ public class FileIOUtils {
     public static void writeToJSONFileWithTimeIncreName(String fileName, Collection<String> lines) {
         try {
             Files.write(Paths.get(createIncrementalFileName(fileName)),
-                    lines.stream().collect(Collectors.joining(",", "[", "]")).getBytes(), OPEN_OPTION);
+                    lines.stream()
+                            .collect(Collectors.joining(",", "[", "]")).getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
@@ -88,7 +89,7 @@ public class FileIOUtils {
 
     public static void writeToJSONFile(String fileName, Collection<String> lines) {
         try {
-            Files.write(Paths.get(fileName), lines.stream().collect(Collectors.joining(",","[","]")).getBytes(), OPEN_OPTION);
+            Files.write(Paths.get(fileName), lines.stream().collect(Collectors.joining(",", "[", "]")).getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
@@ -111,9 +112,7 @@ public class FileIOUtils {
     }
 
     public static void writeToFileAtResourcesWithTimeIncreName(String fileName, String data) {
-        if (!fileName.startsWith("src/main/resources")) {
-            fileName = "src/main/resources/" + fileName;
-        }
+        fileName = checkResourceFolder(fileName);
         try {
             Files.write(Paths.get(createIncrementalFileName(fileName)), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
@@ -121,10 +120,21 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFileAtResources(String fileName, Collection<String> lines) {
-        if (!fileName.startsWith("src/main/resources")) {
-            fileName = "src/main/resources/" + fileName;
+    private static String checkResourceFolder(String fileName) {
+        String resourcesFolder = "src/main/resources/";
+        if (!fileName.startsWith(resourcesFolder)) {
+            fileName = resourcesFolder + fileName;
         }
+        String basePath = System.getProperty("user.dir");
+        File file = new File(basePath + "/" + resourcesFolder);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        return fileName;
+    }
+
+    public static void writeToFileAtResources(String fileName, Collection<String> lines) {
+        fileName = checkResourceFolder(fileName);
         try {
             Files.write(Paths.get(fileName), lines, OPEN_OPTION);
         } catch (IOException ex) {
@@ -133,16 +143,14 @@ public class FileIOUtils {
     }
 
     public static void writeToJSONFileAtResources(String fileName, Collection<String> lines) {
-        if (!fileName.startsWith("src/main/resources")) {
-            fileName = "src/main/resources/" + fileName;
-        }
+        fileName = checkResourceFolder(fileName);
         try {
             String name = fileName;
             if (fileName.contains(".")) {
                 name = fileName.substring(0, fileName.lastIndexOf("."));
             }
             String ext = "json";
-            String data = lines.stream().collect(Collectors.joining(",","[","]"));
+            String data = lines.stream().collect(Collectors.joining(",", "[", "]"));
             Files.write(Paths.get(createFileName(name, ext)), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
@@ -150,9 +158,7 @@ public class FileIOUtils {
     }
 
     public static void writeToFileAtResources(String fileName, String data) {
-        if (!fileName.startsWith("src/main/resources")) {
-            fileName = "src/main/resources/" + fileName;
-        }
+        fileName = checkResourceFolder(fileName);
         try {
             Files.write(Paths.get(fileName), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
@@ -182,9 +188,26 @@ public class FileIOUtils {
         return lines;
     }
 
-    public static List<String> readFileFromResources(String fileName) {
+    public static String readFileFromResourcesAsString(String fileName) {
         try {
-            return Files.readAllLines(Paths.get(FileIOUtils.class.getClassLoader().getResource(fileName).toURI()));
+            return Files.readAllLines(Paths.get(FileIOUtils.class
+                    .getClassLoader()
+                    .getResource(fileName)
+                    .toURI()))
+                    .stream()
+                    .collect(Collectors.joining());
+        } catch (IOException | URISyntaxException ex) {
+            LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
+        }
+        return "";
+    }
+
+    public static List<String> readFileFromResourcesAsStringList(String fileName) {
+        try {
+            return Files.readAllLines(Paths.get(FileIOUtils.class
+                    .getClassLoader()
+                    .getResource(fileName)
+                    .toURI()));
         } catch (IOException | URISyntaxException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }

@@ -55,6 +55,7 @@
         </dependency>
     </dependencies>
     <build>
+        <finalName>common-utils</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -62,7 +63,6 @@
                 <version>2.22.1</version>
             </plugin>
         </plugins>
-        <finalName>CommonUtils</finalName>
     </build>
     <name>CommonUtils</name>
 </project>
