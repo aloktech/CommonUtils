@@ -25,24 +25,25 @@ public enum HibernateUtils {
 
     private String filePath;
     private SessionFactory sessionFactory;
+    private Session session;
     private BootstrapServiceRegistry registry;
 
-    public void config() throws ConfigException {
+    public void config() throws RuntimeException {
         config("");
     }
 
-    public void config(String input) throws ConfigException {
+    public void config(String input) throws RuntimeException {
         this.filePath = input;
         log.info("Hibernate is opening");
         try {
             if (Objects.nonNull(registry) && Objects.nonNull(sessionFactory)) {
-                log.info("StandardServiceRegistry is already generated");
+                log.info("StandardServiceRegistry is registered");
                 log.info("SessionFactory is already opened");
                 return;
             }
             BootstrapServiceRegistryBuilder registryBuilder = new BootstrapServiceRegistryBuilder();
             registry = registryBuilder.build();
-            log.info("StandardServiceRegistry is generated");
+            log.info("StandardServiceRegistry is registered");
             Configuration config = new Configuration(registry);
             if (Objects.isNull(input) || input.isEmpty()) {
                 log.info("Hibernate is configured from hibernate.cfg.xml");
@@ -51,7 +52,7 @@ public enum HibernateUtils {
                 log.info("Hibernate is configured from {}", input);
                 config = config.configure(input);
             } else {
-                throw new ConfigException("Invalid File");
+                throw new RuntimeException("Invalid File");
             }
             sessionFactory = config.buildSessionFactory();
             log.info("SessionFactory is opened");
@@ -61,12 +62,11 @@ public enum HibernateUtils {
                 StandardServiceRegistryBuilder.destroy(registry.getParentServiceRegistry());
                 log.error("StandardServiceRegistry is destroyed");
             }
-            throw new ConfigException(e);
+            throw new RuntimeException(e);
         }
     }
 
-    public Session openConnection() throws ConfigException {
-        Session session;
+    public Session openConnection() throws RuntimeException {
         if (Objects.isNull(sessionFactory)) {
             log.info("SessionFactory is not opened");
             config(Objects.isNull(this.filePath) ? "" : this.filePath);
@@ -74,6 +74,10 @@ public enum HibernateUtils {
         session = sessionFactory.openSession();
         log.info("Session is opened");
         return session;
+    }
+
+    public void transactionRollBack() {
+        transactionRollBack(session);
     }
 
     public void transactionRollBack(Session session) {
@@ -93,7 +97,11 @@ public enum HibernateUtils {
         }
     }
 
-    public void shutDown() throws ConfigException {
+    public void closeConnection() {
+        closeConnection(session);
+    }
+
+    public void shutDown() throws RuntimeException {
         log.info("Hibernate is closing");
         if (Objects.nonNull(sessionFactory)) {
             sessionFactory.close();
@@ -101,7 +109,7 @@ public enum HibernateUtils {
             log.info("SessionFactory is closed");
             if (Objects.nonNull(registry)) {
                 StandardServiceRegistryBuilder.destroy(registry.getParentServiceRegistry());
-                log.info("StandardServiceRegistry is destroyed");
+                log.info("StandardServiceRegistry is deregistered");
             }
         } else {
             log.info("SessionFactory is already closed");
