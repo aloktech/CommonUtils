@@ -70,7 +70,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>CommonUtils</finalName>
+        <finalName>common-utils</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

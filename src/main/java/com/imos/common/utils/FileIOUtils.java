@@ -237,7 +237,10 @@ public class FileIOUtils {
 
     public static List<String> readFileFromResourcesAsLines(String fileName) {
         try {
-            return Files.readAllLines(Paths.get(FileIOUtils.class.getClassLoader().getResource(fileName).toURI()));
+            return Files.readAllLines(Paths.get(FileIOUtils.class
+                    .getClassLoader()
+                    .getResource(fileName)
+                    .toURI()));
         } catch (IOException | URISyntaxException ex) {
             LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
         }

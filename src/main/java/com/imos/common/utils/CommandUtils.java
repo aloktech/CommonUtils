@@ -98,7 +98,7 @@ public class CommandUtils {
             if (exitValue == 0) {
                 LOG.info("Success");
             } else {
-                LOG.error("Failure {}", exitValue);
+                LOG.error("ERROR {}", exitValue);
             }
         } catch (IOException | InterruptedException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
