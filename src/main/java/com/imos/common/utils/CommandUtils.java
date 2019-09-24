@@ -52,18 +52,30 @@ public class CommandUtils {
         return executeBatchCommand(dir, batchFile, 0);
     }
 
-    public static List<String> executeCommand(String dir, long waitingTime, List<String> cmds) {
-        List<String> lines = Collections.EMPTY_LIST;
+    public static List<String> executeWindowCommand(List<String> cmds) {
+        return CommandUtils.executeWindowCommand(new File(".").getAbsolutePath(), cmds);
+    }
+
+    public static List<String> executeWindowCommand(String dir, List<String> cmds) {
+        return CommandUtils.executeWindowCommand(dir, cmds, 0);
+    }
+
+    public static List<String> executeWindowCommand(String dir, List<String> cmds, long waitingTime) {
         List<String> pcmds = new ArrayList<>();
         pcmds.add("cmd.exe");
         pcmds.add("/C");
         pcmds.addAll(cmds);
-        lines = executeCommand(pcmds, dir, lines, waitingTime);
+        List<String> lines = executeCommand(pcmds, dir, waitingTime);
 
         return lines;
     }
 
-    private static List<String> executeCommand(List<String> pcmds, String dir, List<String> lines, long waitingTime) {
+    public static List<String> executeCommand(List<String> pcmds) {
+        return executeCommand(pcmds, new File(".").getAbsolutePath(), 0);
+    }
+
+    private static List<String> executeCommand(List<String> pcmds, String dir, long waitingTime) {
+        List<String> lines = new ArrayList<>();
         ProcessBuilder builder = new ProcessBuilder(pcmds);
         builder.directory(new File(dir));
         Process process;
@@ -92,14 +104,6 @@ public class CommandUtils {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
         return lines;
-    }
-
-    public static List<String> executeCommand(List<String> cmds) {
-        return executeCommand(new File(".").getAbsolutePath(), cmds);
-    }
-
-    public static List<String> executeCommand(String dir, List<String> cmds) {
-        return executeCommand(dir, 0, cmds);
     }
 
     private static List<String> readInputStreamData(InputStream output) {
