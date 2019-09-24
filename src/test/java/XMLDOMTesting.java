@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-import com.imos.common.utils.*;
+import com.imos.common.utils.XMLDOMUtils;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;

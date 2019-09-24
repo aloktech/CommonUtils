@@ -7,7 +7,10 @@ package com.imos.common.utils;
 
 import com.alibaba.fastjson.JSON;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -19,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,6 +38,48 @@ public class FileIOUtils {
     public static final OpenOption[] OPEN_OPTION = new OpenOption[]{StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
 
     private static final String INCREMENTAL_DATE_FORMAT = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd_MMM_YYYY_hh_mm_ss a"));
+
+    public static void searchForFoldersAndFilesAndContent(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition, Predicate<String> contentCondition) {
+        if (file != null && file.isDirectory() && !file.isHidden()) {
+            for (File subFile : file.listFiles()) {
+                String name = subFile.getName();
+                if (!subFile.isHidden() && subFile.isDirectory() && folderCondition.test(name)) {
+                    searchForFoldersAndFilesAndContent(subFile, fileList, folderCondition, fileCondition, contentCondition);
+                } else if (!subFile.isHidden() && subFile.canRead() && subFile.isFile() && fileCondition.test(name)) {
+                    if (contentCondition == null) {
+                        System.out.println(subFile.getAbsolutePath());
+                        System.out.println(name);
+                        continue;
+                    }
+                    try (FileReader fileReader = new FileReader(new File(subFile.getAbsolutePath()));
+                            LineNumberReader reader = new LineNumberReader(fileReader)) {
+                        String line = "";
+                        int showDetail = 0;
+                        boolean showLines = false;
+                        while ((line = reader.readLine()) != null) {
+                            showLines = false;
+                            if (contentCondition.test(line)) {
+                                showLines = true;
+                                showDetail++;
+                                if (showDetail == 1) {
+                                    System.out.println();
+                                    System.out.println(name);
+                                    System.out.println(subFile.getAbsolutePath());
+                                }
+                            }
+                            if (showLines) {
+                                System.out.println(reader.getLineNumber() + " : " + line.trim());
+                            }
+                        }
+                    } catch (FileNotFoundException ex) {
+                        java.util.logging.Logger.getLogger(FileIOUtils.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        java.util.logging.Logger.getLogger(FileIOUtils.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        }
+    }
 
     public static void searchForFoldersAndFiles(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition) {
         if (file != null) {
@@ -53,7 +99,7 @@ public class FileIOUtils {
                 .map(o -> o.toString())
                 .collect(Collectors.toList());
     }
-    
+
     public static <T> List<String> transferObjectToJSONStringStream(Collection<T> list) {
         return list.stream()
                 .map(o -> JSON.toJSONString(o))
@@ -62,7 +108,7 @@ public class FileIOUtils {
 
     public static void writeToIncrementalJSONFile(String fileName, Collection<String> lines) {
         try {
-            Files.write(Paths.get(createIncrementalFileName(fileName)),
+            Files.write(Paths.get(createFileWithTimeIncreName(fileName)),
                     lines.stream()
                             .collect(Collectors.joining(",", "[", "]")).getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
@@ -70,17 +116,17 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToIncrementalFile(String fileName, String data) {
+    public static void writeToFileWithTimeIncreName(String fileName, String data) {
         try {
-            Files.write(Paths.get(createIncrementalFileName(fileName)), data.getBytes(), OPEN_OPTION);
+            Files.write(Paths.get(createFileWithTimeIncreName(fileName)), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
     }
 
-    public static void writeToIncrementalFile(String fileName, Collection<String> lines) {
+    public static void writeToFileWithTimeIncreName(String fileName, Collection<String> lines) {
         try {
-            Files.write(Paths.get(createIncrementalFileName(fileName)), lines, OPEN_OPTION);
+            Files.write(Paths.get(createFileWithTimeIncreName(fileName)), lines, OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
@@ -113,7 +159,7 @@ public class FileIOUtils {
     public static void writeToFileAtResourcesWithTimeIncreName(String fileName, String data) {
         fileName = checkResourceFolder(fileName);
         try {
-            Files.write(Paths.get(createIncrementalFileName(fileName)), data.getBytes(), OPEN_OPTION);
+            Files.write(Paths.get(createFileWithTimeIncreName(fileName)), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
         }
@@ -188,6 +234,17 @@ public class FileIOUtils {
         return lines;
     }
 
+    public static String readFileAsString(String fileName) {
+        try {
+            return Files.readAllLines(Paths.get(fileName))
+                    .stream()
+                    .collect(Collectors.joining("\n"));
+        } catch (IOException ex) {
+            LOG.error("{} {}", ex.getMessage(), ex.getCause().getClass().getName());
+        }
+        return "";
+    }
+
     public static String readFileFromResourcesAsString(String fileName) {
         try {
             return Files.readAllLines(Paths.get(FileIOUtils.class
@@ -214,7 +271,7 @@ public class FileIOUtils {
         return Collections.EMPTY_LIST;
     }
 
-    private static String createIncrementalFileName(String name, String ext) {
+    private static String createFileNameWithTimeIncre(String name, String ext) {
         return name + "_" + INCREMENTAL_DATE_FORMAT + "." + ext;
     }
 
@@ -222,7 +279,7 @@ public class FileIOUtils {
         return name + "." + ext;
     }
 
-    private static String createIncrementalFileName(String fileName) {
+    private static String createFileWithTimeIncreName(String fileName) {
         return createFileName(fileName, true);
     }
 
@@ -230,7 +287,7 @@ public class FileIOUtils {
         String name = fileName.substring(0, fileName.lastIndexOf("."));
         String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
         return incremental
-                ? createIncrementalFileName(name, ext)
+                ? createFileNameWithTimeIncre(name, ext)
                 : createFileName(name, ext);
     }
 

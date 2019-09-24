@@ -18,9 +18,6 @@ public class PredicatesBuilder<T> {
     @Getter
     private Predicate<T> predicate;
 
-    public PredicatesBuilder() {
-    }
-
     public PredicatesBuilder and(Predicate<T> newPredicate) {
         if (predicate == null) {
             predicate = newPredicate;
