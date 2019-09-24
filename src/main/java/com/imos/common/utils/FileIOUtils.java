@@ -18,11 +18,13 @@ import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +40,7 @@ public class FileIOUtils {
 
     public static final OpenOption[] OPEN_OPTION = new OpenOption[]{StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
 
-    private static final String INCREMENTAL_DATE_FORMAT = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd_MMM_YYYY_hh_mm_ss a"));
+    private static final String INCREMENTAL_DATE_FORMAT = "dd_MMM_YYYY_hh_mm_ss a";
 
     public static void searchForFoldersAndFilesAndContent(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition, Predicate<String> contentCondition) {
         if (file != null && file.isDirectory() && !file.isHidden()) {
@@ -79,7 +81,12 @@ public class FileIOUtils {
 
     public static void searchForFoldersAndFiles(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition) {
         if (file != null) {
-            for (File subFile : file.listFiles()) {
+            File[] files = file.listFiles();
+//            if (files == null || file.isHidden()) {
+            if (files == null) {
+                return;
+            }
+            for (File subFile : files) {
                 String name = subFile.getName();
                 if (!subFile.isHidden() && subFile.isDirectory() && folderCondition.test(name)) {
                     searchForFoldersAndFiles(subFile, fileList, folderCondition, fileCondition);
@@ -90,9 +97,9 @@ public class FileIOUtils {
         }
     }
 
-    public static <T> List<String> transferObjectToStringStream(Collection<T> list) {
+    public static <T, D> List<D> transformStreamData(Collection<T> list, Function<T, D> func) {
         return list.stream()
-                .map(o -> o.toString())
+                .map(line -> func.apply(line))
                 .collect(Collectors.toList());
     }
 
@@ -113,11 +120,34 @@ public class FileIOUtils {
         }
     }
 
+    public static void writeToFileAtResourcesWithTimeIncreName(String fileName, String data) {
+        try {
+            fileName = checkResourceFolder(fileName);
+            fileName = createIncrementalFileName(fileName);
+            fileName = createFilePath(fileName);
+            Files.write(Paths.get(fileName), data.getBytes(), OPEN_OPTION);
+        } catch (IOException ex) {
+            LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
+        }
+    }
+
     public static void writeToFileWithTimeIncreName(String fileName, String data) {
         try {
             fileName = createIncrementalFileName(fileName);
             fileName = createFilePath(fileName);
             Files.write(Paths.get(fileName), data.getBytes(), OPEN_OPTION);
+        } catch (IOException ex) {
+            LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
+        }
+
+    }
+
+    public static void writeToFileAtResourcesWithTimeIncreName(String fileName, Collection<String> lines) {
+        try {
+            fileName = checkResourceFolder(fileName);
+            fileName = createIncrementalFileName(fileName);
+            fileName = createFilePath(fileName);
+            Files.write(Paths.get(fileName), lines, OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
         }
@@ -308,29 +338,32 @@ public class FileIOUtils {
     }
 
     private static String createIncrementalFileName(String name) {
-        return name + "_" + INCREMENTAL_DATE_FORMAT + "." + "";
+        String ext = name.substring(name.lastIndexOf("."));
+        name = name.substring(0, name.lastIndexOf("."));
+        String time = calculateCurrentTime();
+        return name + "_" + time + ext;
     }
 
     private static String createIncrementalFileName(String name, String ext) {
-        return name + "_" + INCREMENTAL_DATE_FORMAT + "." + ext;
+        String time = calculateCurrentTime();
+        return name + "_" + time + "." + ext;
     }
 
-    private static String createFileNameWithTimeIncre(String name) {
-        return name + "_" + INCREMENTAL_DATE_FORMAT + "." + "";
-    }
-
-    private static String createFileNameWithTimeIncre(String name, String ext) {
-        return name + "_" + INCREMENTAL_DATE_FORMAT + "." + ext;
-    }
-
+//    private static String createFileNameWithTimeIncre(String name) {
+//        String time = calculateCurrentTime().toString()
+//        return name + "_" + time + "." + "";
+//    }
+//    private static String createFileNameWithTimeIncre(String name, String ext) {
+//        String time = calculateCurrentTime().toString()
+//        return name + "_" + time + "." + ext;
+//    }
     private static String createFileName(String name, String ext) {
         return name + "." + ext;
     }
 
-    private static String createFileWithTimeIncreName(String fileName) {
-        return createFileName(fileName, true);
-    }
-
+//    private static String createFileWithTimeIncreName(String fileName) {
+//        return createFileName(fileName, true);
+//    }
     private static String createFileName(String fileName, boolean incremental) {
         String name = fileName.substring(0, fileName.lastIndexOf("."));
         String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -339,10 +372,9 @@ public class FileIOUtils {
                 : fileName;
     }
 
-    private static String createFileName(String fileName) {
-        return createFileName(fileName, false);
-    }
-
+//    private static String createFileName(String fileName) {
+//        return createFileName(fileName, false);
+//    }
     private static String getResourcesFolderPath() {
         return "src" + File.separator + "main" + File.separator + "resources";
     }
@@ -358,5 +390,9 @@ public class FileIOUtils {
             temp = temp.getCause();
         }
         return builder.toString();
+    }
+
+    private static String calculateCurrentTime() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern(INCREMENTAL_DATE_FORMAT));
     }
 }
