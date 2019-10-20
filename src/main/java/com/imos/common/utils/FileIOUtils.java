@@ -18,14 +18,12 @@ import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,51 +36,59 @@ public class FileIOUtils {
 
     private static final Logger LOG = LogManager.getLogger(FileIOUtils.class);
 
-    public static final OpenOption[] OPEN_OPTION = new OpenOption[]{StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
+    public static final OpenOption[] OPEN_OPTION = new OpenOption[]{
+        StandardOpenOption.CREATE, 
+        StandardOpenOption.TRUNCATE_EXISTING};
 
     private static final String INCREMENTAL_DATE_FORMAT = "dd_MMM_YYYY_hh_mm_ss a";
 
-    public static void searchForFoldersAndFilesAndContent(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition, Predicate<String> contentCondition) {
+    public static Collection<String> searchForFoldersAndFilesAndContent(File file, 
+            Collection<String> lines, 
+            Predicate<String> folderCondition, 
+            Predicate<String> fileCondition, 
+            Predicate<String> contentCondition) {
         if (file != null && file.isDirectory() && !file.isHidden()) {
             for (File subFile : file.listFiles()) {
                 String name = subFile.getName();
                 if (!subFile.isHidden() && subFile.isDirectory() && folderCondition.test(name)) {
-                    searchForFoldersAndFilesAndContent(subFile, fileList, folderCondition, fileCondition, contentCondition);
+                   lines = searchForFoldersAndFilesAndContent(subFile, lines, folderCondition, fileCondition, contentCondition);
                 } else if (!subFile.isHidden() && subFile.canRead() && subFile.isFile() && fileCondition.test(name)) {
                     if (contentCondition == null) {
-                        System.out.println(subFile.getAbsolutePath());
-                        System.out.println(name);
                         continue;
                     }
-                    try (FileReader fileReader = new FileReader(new File(subFile.getAbsolutePath()));
+                    try ( FileReader fileReader = new FileReader(new File(subFile.getAbsolutePath()));
                             LineNumberReader reader = new LineNumberReader(fileReader)) {
                         String line = "";
-                        int showDetail = 0;
                         boolean showLines;
+                        lines.add(subFile.getName());
+                        lines.add(subFile.getAbsolutePath());
                         while ((line = reader.readLine()) != null) {
                             showLines = false;
                             if (contentCondition.test(line)) {
                                 showLines = true;
-                                showDetail++;
                             }
                             if (showLines) {
-                                System.out.println(reader.getLineNumber() + " : " + line.trim());
+                                lines.add(reader.getLineNumber() + " : " + line.trim());
                             }
                         }
+                        lines.add("\n");
                     } catch (FileNotFoundException ex) {
-                        java.util.logging.Logger.getLogger(FileIOUtils.class.getName()).log(Level.SEVERE, null, ex);
+                        LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
                     } catch (IOException ex) {
-                        java.util.logging.Logger.getLogger(FileIOUtils.class.getName()).log(Level.SEVERE, null, ex);
+                        LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
                     }
                 }
             }
         }
+        return lines;
     }
 
-    public static void searchForFoldersAndFiles(File file, Collection<String> fileList, Predicate<String> folderCondition, Predicate<String> fileCondition) {
+    public static void searchForFoldersAndFiles(File file, 
+            Collection<String> fileList, 
+            Predicate<String> folderCondition, 
+            Predicate<String> fileCondition) {
         if (file != null) {
             File[] files = file.listFiles();
-//            if (files == null || file.isHidden()) {
             if (files == null) {
                 return;
             }
@@ -212,10 +218,20 @@ public class FileIOUtils {
     }
 
     private static String createFilePath(String fileName) {
-        String absUserDirPath = new File("").getAbsolutePath();
-        File file = new File(absUserDirPath + File.separator + fileName);
-        String absFilePath = file.getAbsolutePath();
-        createIntermediateFolders(absFilePath);
+        File parentFolder = new File(fileName);
+        String parentFolderPath = new File("").getAbsolutePath();
+        if (fileName.contains(File.separator)) {
+            parentFolderPath = fileName.substring(0, fileName.lastIndexOf(File.separator));
+            parentFolder = new File(parentFolderPath);
+        }
+        String absFilePath = fileName;
+        if (!parentFolder.exists()) {
+            File file = new File(parentFolderPath + File.separator + fileName);
+            absFilePath = file.getAbsolutePath();
+            createIntermediateFolders(absFilePath);
+        } else {
+            createIntermediateFolders(parentFolderPath);
+        }
         return absFilePath;
     }
 
@@ -330,7 +346,10 @@ public class FileIOUtils {
 
     public static String readFileFromResources(String fileName) {
         try {
-            return new String(Files.readAllBytes(Paths.get(FileIOUtils.class.getClassLoader().getResource(fileName).toURI())));
+            return new String(Files.readAllBytes(Paths.get(FileIOUtils.class
+                    .getClassLoader()
+                    .getResource(fileName)
+                    .toURI())));
         } catch (IOException | URISyntaxException ex) {
             LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
         }
@@ -349,21 +368,10 @@ public class FileIOUtils {
         return name + "_" + time + "." + ext;
     }
 
-//    private static String createFileNameWithTimeIncre(String name) {
-//        String time = calculateCurrentTime().toString()
-//        return name + "_" + time + "." + "";
-//    }
-//    private static String createFileNameWithTimeIncre(String name, String ext) {
-//        String time = calculateCurrentTime().toString()
-//        return name + "_" + time + "." + ext;
-//    }
     private static String createFileName(String name, String ext) {
         return name + "." + ext;
     }
 
-//    private static String createFileWithTimeIncreName(String fileName) {
-//        return createFileName(fileName, true);
-//    }
     private static String createFileName(String fileName, boolean incremental) {
         String name = fileName.substring(0, fileName.lastIndexOf("."));
         String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -372,9 +380,6 @@ public class FileIOUtils {
                 : fileName;
     }
 
-//    private static String createFileName(String fileName) {
-//        return createFileName(fileName, false);
-//    }
     private static String getResourcesFolderPath() {
         return "src" + File.separator + "main" + File.separator + "resources";
     }
