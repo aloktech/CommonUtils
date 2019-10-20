@@ -53,11 +53,11 @@ public class CommandUtils {
     }
 
     public static List<String> executeWindowCommand(List<String> cmds) {
-        return CommandUtils.executeWindowCommand(new File(".").getAbsolutePath(), cmds);
+        return executeWindowCommand(new File(".").getAbsolutePath(), cmds);
     }
 
     public static List<String> executeWindowCommand(String dir, List<String> cmds) {
-        return CommandUtils.executeWindowCommand(dir, cmds, 0);
+        return executeWindowCommand(dir, cmds, 0);
     }
 
     public static List<String> executeWindowCommand(String dir, List<String> cmds, long waitingTime) {

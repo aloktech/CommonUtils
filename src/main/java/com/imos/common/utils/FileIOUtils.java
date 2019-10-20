@@ -37,27 +37,26 @@ public class FileIOUtils {
     private static final Logger LOG = LogManager.getLogger(FileIOUtils.class);
 
     public static final OpenOption[] OPEN_OPTION = new OpenOption[]{
-        StandardOpenOption.CREATE, 
+        StandardOpenOption.CREATE,
         StandardOpenOption.TRUNCATE_EXISTING};
 
     private static final String INCREMENTAL_DATE_FORMAT = "dd_MMM_YYYY_hh_mm_ss a";
 
-    public static Collection<String> searchForFoldersAndFilesAndContent(File file, 
-            Collection<String> lines, 
-            Predicate<String> folderCondition, 
-            Predicate<String> fileCondition, 
+    public static Collection<String> searchForFoldersAndFilesAndContent(File file,
+            Collection<String> lines,
+            Predicate<String> folderCondition,
+            Predicate<String> fileCondition,
             Predicate<String> contentCondition) {
         if (file != null && file.isDirectory() && !file.isHidden()) {
             for (File subFile : file.listFiles()) {
                 String name = subFile.getName();
                 if (!subFile.isHidden() && subFile.isDirectory() && folderCondition.test(name)) {
-                   lines = searchForFoldersAndFilesAndContent(subFile, lines, folderCondition, fileCondition, contentCondition);
+                    lines = searchForFoldersAndFilesAndContent(subFile, lines, folderCondition, fileCondition, contentCondition);
                 } else if (!subFile.isHidden() && subFile.canRead() && subFile.isFile() && fileCondition.test(name)) {
                     if (contentCondition == null) {
                         continue;
                     }
-                    try ( FileReader fileReader = new FileReader(new File(subFile.getAbsolutePath()));
-                            LineNumberReader reader = new LineNumberReader(fileReader)) {
+                    try ( FileReader fileReader = new FileReader(new File(subFile.getAbsolutePath()));  LineNumberReader reader = new LineNumberReader(fileReader)) {
                         String line = "";
                         boolean showLines;
                         lines.add(subFile.getName());
@@ -83,9 +82,9 @@ public class FileIOUtils {
         return lines;
     }
 
-    public static void searchForFoldersAndFiles(File file, 
-            Collection<String> fileList, 
-            Predicate<String> folderCondition, 
+    public static void searchForFoldersAndFiles(File file,
+            Collection<String> fileList,
+            Predicate<String> folderCondition,
             Predicate<String> fileCondition) {
         if (file != null) {
             File[] files = file.listFiles();
@@ -115,7 +114,7 @@ public class FileIOUtils {
                 .collect(Collectors.toList());
     }
 
-    public static void writeToIncrementalJSONFile(String fileName, Collection<String> lines) {
+    public static void writeToJSONFileForCollectionWithTimeIncreName(String fileName, Collection<String> lines) {
         try {
             fileName = createIncrementalFileName(fileName);
             fileName = createFilePath(fileName);
@@ -126,7 +125,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFileAtResourcesWithTimeIncreName(String fileName, String data) {
+    public static void writeToFileAsStringAtResourcesWithTimeIncreName(String fileName, String data) {
         try {
             fileName = checkResourceFolder(fileName);
             fileName = createIncrementalFileName(fileName);
@@ -137,7 +136,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFileWithTimeIncreName(String fileName, String data) {
+    public static void writeToFileAsStringWithTimeIncreName(String fileName, String data) {
         try {
             fileName = createIncrementalFileName(fileName);
             fileName = createFilePath(fileName);
@@ -148,7 +147,7 @@ public class FileIOUtils {
 
     }
 
-    public static void writeToFileAtResourcesWithTimeIncreName(String fileName, Collection<String> lines) {
+    public static void writeToFileAsLinesAtResourcesWithTimeIncreName(String fileName, Collection<String> lines) {
         try {
             fileName = checkResourceFolder(fileName);
             fileName = createIncrementalFileName(fileName);
@@ -159,7 +158,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFileWithTimeIncreName(String fileName, Collection<String> lines) {
+    public static void writeToFileAsLinesWithTimeIncreName(String fileName, Collection<String> lines) {
         try {
             fileName = createIncrementalFileName(fileName);
             fileName = createFilePath(fileName);
@@ -169,7 +168,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToJSONFile(String fileName, Collection<String> lines) {
+    public static void writeToJSONFileForCollection(String fileName, Collection<String> lines) {
         try {
             fileName = createFilePath(fileName);
             Files.write(Paths.get(fileName), ("[" + lines.stream().collect(Collectors.joining(",")) + "]").getBytes(), OPEN_OPTION);
@@ -178,7 +177,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFile(String fileName, Collection<String> lines) {
+    public static void writeToFileAsLines(String fileName, Collection<String> lines) {
         try {
             fileName = createFilePath(fileName);
             Files.write(Paths.get(fileName), lines, OPEN_OPTION);
@@ -187,7 +186,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFile(String fileName, String data) {
+    public static void writeToFileAsString(String fileName, String data) {
         try {
             fileName = createFilePath(fileName);
             Files.write(Paths.get(fileName), data.getBytes(), OPEN_OPTION);
@@ -196,7 +195,7 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToIncrementalFileAtResources(String fileName, String data) {
+    public static void writeToIncrementalFileAsStringAtResources(String fileName, String data) {
         fileName = checkResourceFolder(fileName);
         try {
             fileName = createIncrementalFileName(fileName);
@@ -207,11 +206,32 @@ public class FileIOUtils {
         }
     }
 
-    public static void writeToFileAtResources(String fileName, Collection<String> lines) {
+    public static void writeToIncrementalFileAsLinesAtResources(String fileName, Collection<String> lines) {
+        fileName = checkResourceFolder(fileName);
+        try {
+            fileName = createIncrementalFileName(fileName);
+            fileName = createFilePath(fileName);
+            Files.write(Paths.get(fileName), lines, OPEN_OPTION);
+        } catch (IOException ex) {
+            LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
+        }
+    }
+
+    public static void writeToFileAsLinesAtResources(String fileName, Collection<String> lines) {
         fileName = checkResourceFolder(fileName);
         try {
             fileName = createFilePath(fileName);
             Files.write(Paths.get(fileName), lines, OPEN_OPTION);
+        } catch (IOException ex) {
+            LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
+        }
+    }
+
+    public static void writeToFileAsStringAtResources(String fileName, String data) {
+        fileName = checkResourceFolder(fileName);
+        try {
+            fileName = createFilePath(fileName);
+            Files.write(Paths.get(fileName), data.getBytes(), OPEN_OPTION);
         } catch (IOException ex) {
             LOG.error("{} {}", ex.getMessage(), getCauseMessage(ex));
         }
@@ -277,7 +297,7 @@ public class FileIOUtils {
         }
     }
 
-    public static List<String> readFile(String filePath) {
+    public static List<String> readFileAsLines(String filePath) {
         List<String> lines;
         File file = new File(filePath);
         if (file.exists()) {
@@ -344,7 +364,7 @@ public class FileIOUtils {
         return Collections.EMPTY_LIST;
     }
 
-    public static String readFileFromResources(String fileName) {
+    public static String readFileFromResourcesAsString(String fileName) {
         try {
             return new String(Files.readAllBytes(Paths.get(FileIOUtils.class
                     .getClassLoader()
